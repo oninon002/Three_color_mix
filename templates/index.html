@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三原色混合实验</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>三原色混合实验</h1>
+        </header>
+        
+        <div class="main-content">
+            <!-- 左侧控制面板 -->
+            <div class="control-panel">
+                <section class="color-info">
+                    <h2>颜色信息</h2>
+                    <div class="info-box">
+                        <p id="colorInfo">当前颜色信息：RGB(255,255,255) HEX:#FFFFFF</p>
+                    </div>
+                </section>
+                
+                <section class="single-color">
+                    <h2>单色预览</h2>
+                    <div class="preview-box" id="previewBox"></div>
+                    <p class="rgb-info">RGB: <span id="rgbPercent">(100%, 100%, 100%)</span></p>
+                    <p class="hex-info">HEX: <span id="hexCode">#FFFFFF</span></p>
+                </section>
+                
+                <section class="color-control">
+                    <h2>色彩控制</h2>
+                    <div class="slider red">
+                        <label>红色</label>
+                        <input type="range" min="0" max="100" value="100" class="slider-input" id="redSlider">
+                        <span class="slider-value">100%</span>
+                    </div>
+                    <div class="slider green">
+                        <label>绿色</label>
+                        <input type="range" min="0" max="100" value="100" class="slider-input" id="greenSlider">
+                        <span class="slider-value">100%</span>
+                    </div>
+                    <div class="slider blue">
+                        <label>蓝色</label>
+                        <input type="range" min="0" max="100" value="100" class="slider-input" id="blueSlider">
+                        <span class="slider-value">100%</span>
+                    </div>
+                </section>
+                
+                <section class="actions">
+                    <button class="btn" id="pickColorBtn">选择颜色</button>
+                    <button class="btn" id="resetBtn">重置颜色</button>
+                </section>
+                
+                <section class="hex-input">
+                    <h2>输入16进制颜色</h2>
+                    <div class="input-group">
+                        <span>#</span>
+                        <input type="text" id="hexInput" placeholder="FFFFFF" maxlength="6">
+                        <button class="btn" id="applyBtn">应用</button>
+                    </div>
+                    <p id="hexError" class="error-message"></p>
+                </section>
+            </div>
+            
+            <!-- 右侧混合演示区 -->
+            <div class="demo-panel">
+                <h2>三原色混合演示</h2>
+                <div class="light-overlay">
+                    <div class="light red-light" id="redLight"></div>
+                    <div class="light green-light" id="greenLight"></div>
+                    <div class="light blue-light" id="blueLight"></div>
+                </div>
+                
+                <div class="principle">
+                    <h3>三原色叠加原理</h3>
+                    <ul>
+                        <li>红色 + 绿色 = 黄色</li>
+                        <li>红色 + 蓝色 = 品红色</li>
+                        <li>绿色 + 蓝色 = 青色</li>
+                        <li>三色叠加 = 白色</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 天子社区 | 光学原理探索</p>
+            <p>三原色加色混合演示系统</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

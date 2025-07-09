@@ -1,0 +1,263 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "微软雅黑", Arial, sans-serif;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #343a40;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #4a7dff;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.main-content {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.control-panel, .demo-panel {
+    background-color: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.control-panel {
+    flex: 1;
+    min-width: 350px;
+}
+
+.demo-panel {
+    flex: 1;
+    min-width: 500px;
+}
+
+section {
+    margin-bottom: 30px;
+}
+
+h2, h3 {
+    color: #4a7dff;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.info-box {
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.preview-box {
+    height: 150px;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.rgb-info, .hex-info {
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.slider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.slider label {
+    width: 50px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.slider.red label {
+    color: #ff6b6b;
+}
+
+.slider.green label {
+    color: #51cf66;
+}
+
+.slider.blue label {
+    color: #339af0;
+}
+
+.slider-input {
+    flex: 1;
+    margin: 0 15px;
+    height: 6px;
+    border-radius: 3px;
+}
+
+.slider.red .slider-input {
+    background: linear-gradient(to right, #ff000000, #ff0000);
+}
+
+.slider.green .slider-input {
+    background: linear-gradient(to right, #00ff0000, #00ff00);
+}
+
+.slider.blue .slider-input {
+    background: linear-gradient(to right, #0000ff00, #0000ff);
+}
+
+.slider-value {
+    width: 50px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    background-color: #4a7dff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #3366d6;
+    transform: translateY(-2px);
+}
+
+#resetBtn {
+    background-color: #ff7e5f;
+}
+
+.input-group {
+    display: flex;
+    margin-top: 10px;
+    align-items: center;
+}
+
+.input-group span {
+    background: #e9ecef;
+    padding: 10px 15px;
+    border-radius: 5px 0 0 5px;
+    font-weight: bold;
+}
+
+#hexInput {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-left: none;
+    border-right: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+}
+
+.error-message {
+    margin-top: 10px;
+    color: #e74c3c;
+    font-size: 14px;
+    min-height: 20px;
+}
+
+/* 混合效果 */
+.light-overlay {
+    position: relative;
+    width: 500px;   /* 可根据实际需要调整 */
+    height: 350px;
+    margin: 0 auto; /* 水平居中 */
+    background: radial-gradient(circle, #2b2b2b, #1a1a1a);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.light {
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+    mix-blend-mode: lighten;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.red-light {
+    background: radial-gradient(circle at center, rgba(255, 0, 0, 0.8), rgba(255, 0, 0, 0));
+    /* 向左上偏移 */
+    transform: translate(-50%, -50%) translate(-80px, -40px);
+}
+
+.green-light {
+    background: radial-gradient(circle at center, rgba(0, 255, 0, 0.8), rgba(0, 255, 0, 0));
+    /* 向右上偏移 */
+    transform: translate(-50%, -50%) translate(80px, -40px);
+}
+
+.blue-light {
+    background: radial-gradient(circle at center, rgba(0, 0, 255, 0.8), rgba(0, 0, 255, 0));
+    /* 向下偏移 */
+    transform: translate(-50%, -50%) translate(0, 80px);
+}
+
+.principle ul {
+    padding-left: 25px;
+}
+
+.principle li {
+    margin-bottom: 12px;
+    font-size: 15px;
+}
+
+footer {
+    margin-top: 50px;
+    text-align: center;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+footer p:first-child {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .control-panel, .demo-panel {
+        min-width: 100%;
+    }
+}
