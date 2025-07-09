@@ -1,282 +1,329 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // 初始化默认值
-    let red = 100;
-    let green = 100;
-    let blue = 100;
-    
-    // 获取DOM元素
-    const previewBox = document.getElementById('previewBox');
-    const rgbPercent = document.getElementById('rgbPercent');
-    const hexCode = document.getElementById('hexCode');
-    const colorInfo = document.getElementById('colorInfo');
-    
-    const redSlider = document.getElementById('redSlider');
-    const greenSlider = document.getElementById('greenSlider');
-    const blueSlider = document.getElementById('blueSlider');
-    
-    const redValue = document.querySelector('.slider.red .slider-value');
-    const greenValue = document.querySelector('.slider.green .slider-value');
-    const blueValue = document.querySelector('.slider.blue .slider-value');
-    
-    const redLight = document.getElementById('redLight');
-    const greenLight = document.getElementById('greenLight');
-    const blueLight = document.getElementById('blueLight');
-    
-    const hexInput = document.getElementById('hexInput');
-    const applyBtn = document.getElementById('applyBtn');
-    const hexError = document.getElementById('hexError');
-    
-    const resetBtn = document.getElementById('resetBtn');
-    const pickColorBtn = document.getElementById('pickColorBtn');
-    
-    const rgbInput = document.getElementById('rgbInput');
-    const applyRgbBtn = document.getElementById('applyRgbBtn');
-    const rgbError = document.getElementById('rgbError');
-
-    const hexToRgbResult = document.getElementById('hexToRgbResult');
-
-    // 更新颜色显示
-    function updateColor() {
-        fetch('/update-color', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                red: red,
-                green: green,
-                blue: blue
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            previewBox.style.backgroundColor = data.color;
-            rgbPercent.textContent = data.rgb_percent;
-            hexCode.textContent = data.hex;
-            colorInfo.textContent = `当前颜色信息：RGB${data.rgb} HEX:${data.hex}`;
-            
-            // 删除/注释掉原有的光圈opacity控制代码
-            // redLight.style.opacity = red / 100;
-            // greenLight.style.opacity = green / 100;
-            // blueLight.style.opacity = blue / 100;
-
-            // 新增：高精度canvas物理加色混色
-            drawPhysicalMixCanvas(red, green, blue);
-        })
-        .catch(error => console.error('更新颜色失败:', error));
+class ColorMixApp {
+    constructor() {
+        this.state = {
+            red: 100,
+            green: 100,
+            blue: 100
+        };
+        
+        this.cacheElements();
+        this.initRenderer();
+        this.bindEvents();
+        this.updateColor();
     }
     
-    // 滑块值变化处理
-    function handleSliderChange(slider, valueElement, valueType) {
-        return function() {
-            const newValue = parseInt(this.value);
-            valueElement.textContent = `${newValue}%`;
+    cacheElements() {
+        this.elements = {
+            previewBox: document.getElementById('previewBox'),
+            rgbPercent: document.getElementById('rgbPercent'),
+            hexCode: document.getElementById('hexCode'),
+            colorInfo: document.getElementById('colorInfo'),
             
-            // 更新对应的颜色值
-            if (valueType === 'red') red = newValue;
-            if (valueType === 'green') green = newValue;
-            if (valueType === 'blue') blue = newValue;
+            sliders: {
+                red: document.getElementById('redSlider'),
+                green: document.getElementById('greenSlider'),
+                blue: document.getElementById('blueSlider')
+            },
             
-            updateColor();
+            values: {
+                red: document.querySelector('.slider.red .slider-value'),
+                green: document.querySelector('.slider.green .slider-value'),
+                blue: document.querySelector('.slider.blue .slider-value')
+            },
+            
+            inputs: {
+                hex: document.getElementById('hexInput'),
+                rgb: document.getElementById('rgbInput')
+            },
+            
+            errors: {
+                hex: document.getElementById('hexError'),
+                rgb: document.getElementById('rgbError')
+            },
+            
+            buttons: {
+                applyHex: document.getElementById('applyBtn'),
+                applyRgb: document.getElementById('applyRgbBtn'),
+                reset: document.getElementById('resetBtn'),
+                picker: document.getElementById('pickColorBtn')
+            }
         };
     }
     
-    // 设置滑块事件监听器
-    redSlider.addEventListener('input', handleSliderChange(redSlider, redValue, 'red'));
-    greenSlider.addEventListener('input', handleSliderChange(greenSlider, greenValue, 'green'));
-    blueSlider.addEventListener('input', handleSliderChange(blueSlider, blueValue, 'blue'));
+    initRenderer() {
+        this.renderer = new ColorMixRenderer('mixCanvas');
+    }
     
-    // 重置按钮
-    resetBtn.addEventListener('click', function() {
-        red = green = blue = 100;
-        redSlider.value = 100;
-        greenSlider.value = 100;
-        blueSlider.value = 100;
+    bindEvents() {
+        // 滑块事件
+        this.elements.sliders.red.addEventListener('input', () => this.handleSliderChange('red'));
+        this.elements.sliders.green.addEventListener('input', () => this.handleSliderChange('green'));
+        this.elements.sliders.blue.addEventListener('input', () => this.handleSliderChange('blue'));
         
-        redValue.textContent = '100%';
-        greenValue.textContent = '100%';
-        blueValue.textContent = '100%';
+        // 按钮事件
+        this.elements.buttons.reset.addEventListener('click', () => this.resetColor());
+        this.elements.buttons.applyHex.addEventListener('click', () => this.applyHexColor());
+        this.elements.buttons.applyRgb.addEventListener('click', () => this.applyRgbColor());
+        this.elements.buttons.picker.addEventListener('click', () => this.openColorPicker());
         
-        hexInput.value = '';
-        hexError.textContent = '';
+        // 输入框回车事件
+        this.elements.inputs.hex.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.applyHexColor();
+        });
         
-        updateColor();
-    });
+        this.elements.inputs.rgb.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.applyRgbColor();
+        });
+    }
     
-    // 应用HEX颜色
-    applyBtn.addEventListener('click', function() {
-        const hexValue = hexInput.value.trim().toUpperCase();
-        hexError.textContent = '';
+    handleSliderChange(colorType) {
+        const newValue = parseInt(this.elements.sliders[colorType].value);
+        this.state[colorType] = newValue;
+        this.elements.values[colorType].textContent = `${newValue}%`;
+        this.updateColor();
+    }
+    
+    async updateColor() {
+        try {
+            const response = await fetch('/update-color', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    red: this.state.red,
+                    green: this.state.green,
+                    blue: this.state.blue
+                })
+            });
+            
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const data = await response.json();
+            
+            // 更新UI
+            this.elements.previewBox.style.backgroundColor = data.color;
+            this.elements.rgbPercent.textContent = data.rgb_percent;
+            this.elements.hexCode.textContent = data.hex;
+            this.elements.colorInfo.textContent = `当前颜色信息：RGB${data.rgb} HEX:${data.hex}`;
+            
+            // 更新Canvas渲染
+            this.renderer.render(
+                Math.round(this.state.red * 2.55),
+                Math.round(this.state.green * 2.55),
+                Math.round(this.state.blue * 2.55)
+            );
+            
+        } catch (error) {
+            console.error('更新颜色失败:', error);
+        }
+    }
+    
+    resetColor() {
+        this.state = { red: 100, green: 100, blue: 100 };
         
-        // 验证输入格式（6位十六进制）
+        // 重置滑块
+        this.elements.sliders.red.value = 100;
+        this.elements.sliders.green.value = 100;
+        this.elements.sliders.blue.value = 100;
+        
+        // 重置显示值
+        this.elements.values.red.textContent = '100%';
+        this.elements.values.green.textContent = '100%';
+        this.elements.values.blue.textContent = '100%';
+        
+        // 清空输入和错误
+        this.elements.inputs.hex.value = '';
+        this.elements.inputs.rgb.value = '';
+        this.elements.errors.hex.textContent = '';
+        this.elements.errors.rgb.textContent = '';
+        
+        this.updateColor();
+    }
+    
+    async applyHexColor() {
+        const hexValue = this.elements.inputs.hex.value.trim().toUpperCase();
+        this.elements.errors.hex.textContent = '';
+        
         if (!/^[0-9A-F]{6}$/.test(hexValue)) {
-            hexError.textContent = '格式错误，请输入6位十六进制颜色值';
+            this.elements.errors.hex.textContent = '格式错误，请输入6位十六进制颜色值';
             return;
         }
         
-        fetch('/hex-to-rgb', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                hex: hexValue
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            const response = await fetch('/hex-to-rgb', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    hex: hexValue
+                })
+            });
+            
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const data = await response.json();
+            
             if (data.error) {
-                hexError.textContent = data.error;
+                this.elements.errors.hex.textContent = data.error;
                 return;
             }
             
-            // 更新滑块和值
-            red = data.red;
-            green = data.green;
-            blue = data.blue;
+            // 更新状态
+            this.state.red = data.red;
+            this.state.green = data.green;
+            this.state.blue = data.blue;
             
-            redSlider.value = red;
-            greenSlider.value = green;
-            blueSlider.value = blue;
+            // 更新滑块
+            this.elements.sliders.red.value = data.red;
+            this.elements.sliders.green.value = data.green;
+            this.elements.sliders.blue.value = data.blue;
             
-            redValue.textContent = `${red}%`;
-            greenValue.textContent = `${green}%`;
-            blueValue.textContent = `${blue}%`;
+            // 更新显示值
+            this.elements.values.red.textContent = `${data.red}%`;
+            this.elements.values.green.textContent = `${data.green}%`;
+            this.elements.values.blue.textContent = `${data.blue}%`;
             
-            // 更新预览颜色
-            updateColor();
-        })
-        .catch(error => {
+            // 更新RGB输入框
+            this.elements.inputs.rgb.value = data.rgb.replace(/[()]/g, '');
+            
+            this.updateColor();
+            
+        } catch (error) {
             console.error('转换失败:', error);
-            hexError.textContent = '转换失败，请重试';
-        });
-    });
-
-    applyRgbBtn.addEventListener('click', function() {
-        rgbError.textContent = '';
-        const value = rgbInput.value.trim();
-        // 支持“255,255,255”格式
+            this.elements.errors.hex.textContent = '转换失败，请重试';
+        }
+    }
+    
+    applyRgbColor() {
+        this.elements.errors.rgb.textContent = '';
+        const value = this.elements.inputs.rgb.value.trim();
+        
+        // 支持"255,255,255"格式
         let match = value.match(/^(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})$/);
         if (!match) {
-            rgbError.textContent = '格式错误，请输入如 255,255,255';
+            this.elements.errors.rgb.textContent = '格式错误，请输入如 255,255,255';
             return;
         }
+        
         let [r, g, b] = [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
         if ([r, g, b].some(x => x < 0 || x > 255)) {
-            rgbError.textContent = '每个值需在0-255之间';
+            this.elements.errors.rgb.textContent = '每个值需在0-255之间';
             return;
         }
+        
         // 转百分比
-        red = Math.round(r / 255 * 100);
-        green = Math.round(g / 255 * 100);
-        blue = Math.round(b / 255 * 100);
-
-        redSlider.value = red;
-        greenSlider.value = green;
-        blueSlider.value = blue;
-
-        redValue.textContent = `${red}%`;
-        greenValue.textContent = `${green}%`;
-        blueValue.textContent = `${blue}%`;
-
-        hexInput.value = '';
-        hexError.textContent = '';
-        updateColor();
-    });
+        this.state.red = Math.round(r / 255 * 100);
+        this.state.green = Math.round(g / 255 * 100);
+        this.state.blue = Math.round(b / 255 * 100);
+        
+        // 更新滑块
+        this.elements.sliders.red.value = this.state.red;
+        this.elements.sliders.green.value = this.state.green;
+        this.elements.sliders.blue.value = this.state.blue;
+        
+        // 更新显示值
+        this.elements.values.red.textContent = `${this.state.red}%`;
+        this.elements.values.green.textContent = `${this.state.green}%`;
+        this.elements.values.blue.textContent = `${this.state.blue}%`;
+        
+        // 更新HEX输入框
+        this.elements.inputs.hex.value = '';
+        this.elements.errors.hex.textContent = '';
+        
+        this.updateColor();
+    }
     
-    // 颜色选择器（浏览器原生API）
-    pickColorBtn.addEventListener('click', function() {
+    openColorPicker() {
         // 创建一个虚拟的input元素以打开颜色选择器
         const colorPicker = document.createElement('input');
         colorPicker.type = 'color';
-        colorPicker.value = previewBox.style.backgroundColor || '#FFFFFF';
+        colorPicker.value = this.elements.previewBox.style.backgroundColor || '#FFFFFF';
         
-        colorPicker.addEventListener('input', function() {
+        colorPicker.addEventListener('input', () => {
             // 格式为#RRGGBB
-            const hexValue = this.value.slice(1).toUpperCase();
-            hexInput.value = hexValue;
+            const hexValue = colorPicker.value.slice(1).toUpperCase();
+            this.elements.inputs.hex.value = hexValue;
             
             // 调用应用按钮的功能
-            applyBtn.click();
+            this.applyHexColor();
         });
         
         colorPicker.click();
-    });
-
-    hexInput.addEventListener('input', function() {
-        const hexValue = hexInput.value.trim();
-        if (/^[0-9A-Fa-f]{6}$/.test(hexValue)) {
-            const r = parseInt(hexValue.slice(0,2), 16);
-            const g = parseInt(hexValue.slice(2,4), 16);
-            const b = parseInt(hexValue.slice(4,6), 16);
-            hexToRgbResult.value = `${r},${g},${b}`;
-        } else {
-            hexToRgbResult.value = '';
-        }
-    });
-    
-    // 初始更新
-    updateColor();
-});
-
-// 新增：高精度canvas物理加色混色函数
-function drawPhysicalMixCanvas(redPercent, greenPercent, bluePercent) {
-    const canvas = document.getElementById('mixCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-
-    // 圆参数
-    const r = 110;
-    const offset = r * 0.55; // 原来是0.8，改小一点让圆心更近
-    const vertical = r * 0.32; // 原来是0.4，改小一点
-    const down = r * 0.65; // 原来是0.9，改小一点
-    const centers = [
-        {x: w/2 - offset, y: h/2 - vertical}, // 红
-        {x: w/2 + offset, y: h/2 - vertical}, // 绿
-        {x: w/2,          y: h/2 + down}      // 蓝
-    ];
-    // 颜色百分比转0-255
-    const redVal = Math.round(redPercent * 2.55);
-    const greenVal = Math.round(greenPercent * 2.55);
-    const blueVal = Math.round(bluePercent * 2.55);
-
-    // 先画底色
-    ctx.fillStyle = "#222";
-    ctx.fillRect(0, 0, w, h);
-
-    // 获取像素数据
-    const imgData = ctx.getImageData(0, 0, w, h);
-    const data = imgData.data;
-
-    for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-            // 判断每个像素是否在各自圆内
-            let rIn = Math.pow(x - centers[0].x, 2) + Math.pow(y - centers[0].y, 2) < r*r;
-            let gIn = Math.pow(x - centers[1].x, 2) + Math.pow(y - centers[1].y, 2) < r*r;
-            let bIn = Math.pow(x - centers[2].x, 2) + Math.pow(y - centers[2].y, 2) < r*r;
-
-            // 物理加色法：每个通道只在对应圆内加
-            let R = rIn ? redVal : 0;
-            let G = gIn ? greenVal : 0;
-            let B = bIn ? blueVal : 0;
-
-            // 三色加色法：RGB通道直接相加，最大不超过255
-            let finalR = Math.min(R, 255);
-            let finalG = Math.min(G, 255);
-            let finalB = Math.min(B, 255);
-
-            // 叠加
-            let idx = (y * w + x) * 4;
-            // 先用底色
-            let base = 34; // #222
-            data[idx]   = Math.max(finalR, base);
-            data[idx+1] = Math.max(finalG, base);
-            data[idx+2] = Math.max(finalB, base);
-            data[idx+3] = 255;
-        }
     }
-    ctx.putImageData(imgData, 0, 0);
 }
+
+class ColorMixRenderer {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) return;
+        
+        this.ctx = this.canvas.getContext('2d');
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        
+        // 预计算圆参数
+        this.r = 110;
+        this.offset = this.r * 0.55;
+        this.vertical = this.r * 0.32;
+        this.down = this.r * 0.65;
+        this.centers = [
+            {x: this.width/2 - this.offset, y: this.height/2 - this.vertical},
+            {x: this.width/2 + this.offset, y: this.height/2 - this.vertical},
+            {x: this.width/2, y: this.height/2 + this.down}
+        ];
+        
+        // 预计算r²
+        this.r2 = this.r * this.r;
+    }
+    
+    render(red, green, blue) {
+        if (!this.ctx) return;
+        
+        requestAnimationFrame(() => {
+            // 清除画布
+            this.ctx.fillStyle = "#222";
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            
+            // 获取像素数据
+            const imgData = this.ctx.getImageData(0, 0, this.width, this.height);
+            const data = imgData.data;
+            const base = 34; // #222的R/G/B值
+            
+            // 优化循环性能
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width; x++) {
+                    const idx = (y * this.width + x) * 4;
+                    
+                    // 计算距离
+                    const dx0 = x - this.centers[0].x;
+                    const dy0 = y - this.centers[0].y;
+                    const dx1 = x - this.centers[1].x;
+                    const dy1 = y - this.centers[1].y;
+                    const dx2 = x - this.centers[2].x;
+                    const dy2 = y - this.centers[2].y;
+                    
+                    // 判断是否在圆内
+                    const rIn = dx0*dx0 + dy0*dy0 < this.r2;
+                    const gIn = dx1*dx1 + dy1*dy1 < this.r2;
+                    const bIn = dx2*dx2 + dy2*dy2 < this.r2;
+                    
+                    // 设置像素颜色
+                    data[idx]   = Math.max(rIn ? red : 0, base);
+                    data[idx+1] = Math.max(gIn ? green : 0, base);
+                    data[idx+2] = Math.max(bIn ? blue : 0, base);
+                    data[idx+3] = 255; // Alpha通道
+                }
+            }
+            
+            // 将像素数据放回画布
+            this.ctx.putImageData(imgData, 0, 0);
+        });
+    }
+}
+
+// 初始化应用
+document.addEventListener('DOMContentLoaded', () => {
+    new ColorMixApp();
+});

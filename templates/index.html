@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="三原色混合实验演示，展示RGB颜色模型的加色混合原理">
     <title>三原色混合实验</title>
+    <link rel="preload" href="{{ url_for('static', filename='style.css') }}" as="style">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -12,9 +14,8 @@
             <h1>三原色混合实验</h1>
         </header>
         
-        <div class="main-content">
-            <!-- 左侧控制面板 -->
-            <div class="control-panel">
+        <main class="main-content">
+            <article class="control-panel">
                 <section class="color-info">
                     <h2>颜色信息</h2>
                     <div class="info-box">
@@ -61,12 +62,10 @@
                         <button class="btn" id="applyBtn">应用</button>
                     </div>
                     <p id="hexError" class="error-message"></p>
-                
                 </section>
-            </div>
+            </article>
             
-            <!-- 右侧混合演示区 -->
-            <div class="demo-panel">
+            <article class="demo-panel">
                 <h2>三原色混合演示</h2>
                 <div class="light-overlay">
                     <canvas id="mixCanvas" width="500" height="350"></canvas>
@@ -81,6 +80,7 @@
                         <li>三色叠加 = 白色</li>
                     </ul>
                 </div>
+                
                 <h2>输入10进制颜色</h2>
                 <div class="input-group">
                     <span>RGB</span>
@@ -88,8 +88,8 @@
                     <button class="btn" id="applyRgbBtn">应用</button>
                 </div>
                 <p id="rgbError" class="error-message"></p>
-            </div>
-        </div>
+            </article>
+        </main>
         
         <footer>
             <p>© 2023 天子社区 | 光学原理探索</p>
@@ -97,6 +97,6 @@
         </footer>
     </div>
     
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </body>
 </html>
