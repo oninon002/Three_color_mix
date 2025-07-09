@@ -61,6 +61,7 @@
                         <button class="btn" id="applyBtn">应用</button>
                     </div>
                     <p id="hexError" class="error-message"></p>
+                
                 </section>
             </div>
             
@@ -68,9 +69,7 @@
             <div class="demo-panel">
                 <h2>三原色混合演示</h2>
                 <div class="light-overlay">
-                    <div class="light red-light" id="redLight"></div>
-                    <div class="light green-light" id="greenLight"></div>
-                    <div class="light blue-light" id="blueLight"></div>
+                    <canvas id="mixCanvas" width="500" height="350"></canvas>
                 </div>
                 
                 <div class="principle">
@@ -82,6 +81,13 @@
                         <li>三色叠加 = 白色</li>
                     </ul>
                 </div>
+                <h2>输入10进制颜色</h2>
+                <div class="input-group">
+                    <span>RGB</span>
+                    <input type="text" id="rgbInput" placeholder="255,255,255" maxlength="11">
+                    <button class="btn" id="applyRgbBtn">应用</button>
+                </div>
+                <p id="rgbError" class="error-message"></p>
             </div>
         </div>
         
