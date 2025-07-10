@@ -59,12 +59,11 @@
                     <div class="input-group">
                         <span>#</span>
                         <input type="text" id="hexInput" placeholder="FFFFFF" maxlength="6">
-                        <button class="btn" id="applyBtn">应用</button>
+                        <button class="btn_use" id="applyBtn">应用</button>
                     </div>
                     <p id="hexError" class="error-message"></p>
                 </section>
             </article>
-            
             <article class="demo-panel">
                 <h2>三原色混合演示</h2>
                 <div class="light-overlay">
@@ -72,7 +71,7 @@
                 </div>
                 
                 <div class="principle">
-                    <h3>三原色叠加原理</h3>
+                    <h2>三原色叠加原理</h2>
                     <ul>
                         <li>红色 + 绿色 = 黄色</li>
                         <li>红色 + 蓝色 = 品红色</li>
@@ -80,19 +79,47 @@
                         <li>三色叠加 = 白色</li>
                     </ul>
                 </div>
-                
+                <section class="actions">
+                    <button class="btn" id="pickColorBtn">——</button>
+                    <button class="btn" id="resetBtn">——</button>
+                </section>
+
                 <h2>输入10进制颜色</h2>
                 <div class="input-group">
                     <span>RGB</span>
                     <input type="text" id="rgbInput" placeholder="255,255,255" maxlength="11">
-                    <button class="btn" id="applyRgbBtn">应用</button>
+                    <button class="btn_use" id="applyRgbBtn">应用</button>
                 </div>
                 <p id="rgbError" class="error-message"></p>
             </article>
+            <article class="upload-panel">
+                <section>
+                    <h2>上传图片</h2>
+                    <div class="input-group" id="uploadGroup">
+                        <span>IMG</IMG>
+                         <input type="file" id="imageInput" accept="image/*" style="flex:1;">
+                        <button class="btn" id="uploadBtn">上传</button>
+                    </div>
+                    <p id="uploadError" class="error-message"></p>
+                </section> 
+                <section>
+                    <h2>梯度色阶演示</h2>
+                    <div class="gradient-demo-box">
+                        <canvas id="gradientCanvas" width="512" height="40" style="width:100%;max-width:512px;display:block;margin:0 auto 16px auto;"></canvas>
+                    </div>
+                    <div class="input-group" style="max-width:350px;margin:0 auto;">
+                        <label for="gradientCount" style="margin-right:10px;">色阶数</label>
+                        <input type="range" id="gradientSlider" min="1" max="256" value="256" style="flex:1;">
+                        <input type="number" id="gradientInput" min="1" max="256" value="256" style="width:70px;margin-left:10px;">
+                    </div>
+                    <p class="gradient-count-info" style="text-align:center;margin-top:8px;">当前色阶数：<span id="gradientCountLabel">256</span></p>
+                </section>
+            </article>
+
         </main>
         
         <footer>
-            <p>© 2023 天子社区 | 光学原理探索</p>
+            <p>© 2025 天子社区 | 光学原理探索</p>
             <p>三原色加色混合演示系统</p>
         </footer>
     </div>

@@ -10,6 +10,11 @@ class ColorMixApp {
         this.initRenderer();
         this.bindEvents();
         this.updateColor();
+        this.cacheGradientElements();
+        this.initGradientDemo();
+        if (this.elements.upload && this.elements.upload.defaultUrl) {
+            this.showImagePreview(this.elements.upload.defaultUrl);
+        }
     }
     
     cacheElements() {
@@ -46,6 +51,13 @@ class ColorMixApp {
                 applyRgb: document.getElementById('applyRgbBtn'),
                 reset: document.getElementById('resetBtn'),
                 picker: document.getElementById('pickColorBtn')
+            },
+            upload: {
+                input: document.getElementById('imageInput'),
+                button: document.getElementById('uploadBtn'),
+                error: document.getElementById('uploadError'),
+                preview: null,
+                defaultUrl: '/static/default_upload.png'
             }
         };
     }
@@ -65,6 +77,9 @@ class ColorMixApp {
         this.elements.buttons.applyHex.addEventListener('click', () => this.applyHexColor());
         this.elements.buttons.applyRgb.addEventListener('click', () => this.applyRgbColor());
         this.elements.buttons.picker.addEventListener('click', () => this.openColorPicker());
+        
+        // 上传图片事件
+        this.elements.upload.button.addEventListener('click', (e) => this.handleImageUpload(e));
         
         // 输入框回车事件
         this.elements.inputs.hex.addEventListener('keypress', (e) => {
@@ -251,6 +266,109 @@ class ColorMixApp {
         });
         
         colorPicker.click();
+    }
+
+    async handleImageUpload(e) {
+        e.preventDefault();
+        this.elements.upload.error.textContent = '';
+        const file = this.elements.upload.input.files[0];
+        if (!file) {
+            this.elements.upload.error.textContent = '请选择图片文件';
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            this.elements.upload.error.textContent = '仅支持图片文件';
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) { // 2MB限制
+            this.elements.upload.error.textContent = '图片大小不能超过2MB';
+            return;
+        }
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const response = await fetch('/upload-image', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok || data.error) {
+                this.elements.upload.error.textContent = data.error || '上传失败';
+                return;
+            }
+            this.elements.upload.error.textContent = '上传成功！';
+            // 展示图片预览
+            this.showImagePreview(data.url);
+            // 可在此处处理返回的图片URL等
+        } catch (err) {
+            this.elements.upload.error.textContent = '上传失败，请重试';
+        }
+    }
+
+    showImagePreview(url) {
+        if (!this.elements.upload.preview) {
+            this.elements.upload.preview = document.createElement('img');
+            this.elements.upload.preview.style.display = 'block';
+            this.elements.upload.preview.style.maxWidth = '100%';
+            this.elements.upload.preview.style.maxHeight = '320px';
+            this.elements.upload.preview.style.margin = '20px auto 0 auto';
+            this.elements.upload.preview.style.borderRadius = '8px';
+            this.elements.upload.preview.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+            const group = document.getElementById('uploadGroup');
+            group.parentNode.insertBefore(this.elements.upload.preview, group.nextSibling);
+        }
+        this.elements.upload.preview.src = url;
+    }
+
+    cacheGradientElements() {
+        this.gradient = {
+            canvas: document.getElementById('gradientCanvas'),
+            slider: document.getElementById('gradientSlider'),
+            input: document.getElementById('gradientInput'),
+            label: document.getElementById('gradientCountLabel'),
+            ctx: null
+        };
+        if (this.gradient.canvas) {
+            this.gradient.ctx = this.gradient.canvas.getContext('2d');
+        }
+    }
+
+    initGradientDemo() {
+        if (!this.gradient.canvas) return;
+        // 初始渲染
+        this.renderGradient(256);
+        // 事件绑定
+        this.gradient.slider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            this.gradient.input.value = val;
+            this.gradient.label.textContent = val;
+            this.renderGradient(val);
+        });
+        this.gradient.input.addEventListener('input', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val)) val = 1;
+            val = Math.max(1, Math.min(256, val));
+            this.gradient.slider.value = val;
+            this.gradient.label.textContent = val;
+            this.renderGradient(val);
+        });
+    }
+
+    renderGradient(count) {
+        const ctx = this.gradient.ctx;
+        const w = this.gradient.canvas.width;
+        const h = this.gradient.canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < count; i++) {
+            const x0 = Math.round(i * w / count);
+            const x1 = Math.round((i + 1) * w / count);
+            const gray = Math.round(i * 255 / (count - 1));
+            ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+            ctx.fillRect(x0, 0, x1 - x0, h);
+        }
+        // 边框
+        ctx.strokeStyle = '#ccc';
+        ctx.strokeRect(0, 0, w, h);
     }
 }
 

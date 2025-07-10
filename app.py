@@ -1,12 +1,24 @@
 from flask import Flask, render_template, request, jsonify
 import re
 from functools import wraps
+import os
+from werkzeug.utils import secure_filename
+import base64
 
 app = Flask(__name__)
 
 # 预编译正则表达式
 HEX_PATTERN = re.compile(r'^[A-F0-9]{6}$')
 RGB_PATTERN = re.compile(r'^(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})$')
+
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def validate_input(f):
     """输入验证装饰器"""
@@ -69,6 +81,22 @@ def hex_to_rgb():
         'green': green_percent,
         'blue': blue_percent
     })
+
+@app.route('/upload-image', methods=['POST'])
+def upload_image():
+    if 'image' not in request.files:
+        return jsonify({'error': '未检测到文件'}), 400
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': '未选择文件'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': '仅支持图片文件'}), 400
+    # 读取文件内容并转为base64
+    img_bytes = file.read()
+    img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+    mime = file.mimetype or 'image/png'
+    data_url = f"data:{mime};base64,{img_b64}"
+    return jsonify({'url': data_url})
 
 if __name__ == '__main__':
     app.run(debug=True)
